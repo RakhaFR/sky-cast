@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+src/
+├── app/
+│   ├── page.tsx            # Halaman utama (Dashboard Cuaca)
+│   ├── layout.tsx          # Layout global (Font, HTML, Body)
+│   └── api/
+│       └── weather/        # Route handler jika ingin fetch via internal API
+│           └── route.ts
+├── components/
+│   ├── CurrentWeather.tsx  # Komponen suhu sekarang & animasi utama
+│   ├── ForecastDaily.tsx   # Komponen ramalan cuaca beberapa hari ke depan
+│   ├── SearchBar.tsx       # Input pencarian kota
+│   └── WeatherDetails.tsx  # Komponen detail (Kecepatan angin, kelembapan, AQI)
+└── utils/
+    └── helpers.ts          # Fungsi pembantu (konversi suhu, format tanggal)
