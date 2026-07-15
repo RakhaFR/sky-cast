@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 // Import helper & ikon yang dibutuhkan
-import { getWeatherIcon, getAQIDescription, formatDayName } from "@/utils/helpers"; 
+import {
+  getWeatherIcon,
+  getAQIDescription,
+  formatDayName,
+} from "@/utils/helpers";
 import { Droplets, Wind, Sun, Wind as AirIcon } from "lucide-react"; // Import ikon detail
 
 import SearchBar from "@/components/SearchBar";
@@ -20,7 +24,9 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(searchCity)}`);
+      const response = await fetch(
+        `/api/weather?city=${encodeURIComponent(searchCity)}`,
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -28,7 +34,7 @@ export default function Home() {
       }
 
       setWeatherData(data);
-      setCity(data.location.name); 
+      setCity(data.location.name);
     } catch (err: any) {
       setError(err.message);
       setWeatherData(null);
@@ -63,56 +69,75 @@ export default function Home() {
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
-          <p className="text-white/70 font-medium animate-pulse">Menghubungkan ke satelit cuaca...</p>
+          <p className="text-white/70 font-medium animate-pulse">
+            Menghubungkan ke satelit cuaca...
+          </p>
         </div>
       )}
 
       {error && (
         <div className="max-w-md mx-auto p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-center my-10">
           <p className="text-red-400 font-medium">⚠️ {error}</p>
-          <p className="text-xs text-white/40 mt-1">Coba periksa kembali ejaan nama kota Anda.</p>
+          <p className="text-xs text-white/40 mt-1">
+            Coba periksa kembali ejaan nama kota Anda.
+          </p>
         </div>
       )}
 
       {/* 3. Tampilan Utama */}
       {!loading && weatherData && (
         <div className="space-y-6 animate-fade-in">
-          
-          <CurrentWeather 
+          <CurrentWeather
             data={{
               city: weatherData.location.name,
               region: weatherData.location.region,
               temp: Math.round(weatherData.current.temp_c),
               condition: weatherData.current.condition.text,
               date: formatDayName(new Date().toISOString().split("T")[0]),
-            }} 
+            }}
             IconComponent={getWeatherIcon(weatherData.current.condition.text)}
           />
 
           {/* Mengirim Ikon Lucide sebagai objek komponen langsung */}
-          <WeatherDetails 
+          <WeatherDetails
             details={[
-              { label: "Kelembapan", value: `${weatherData.current.humidity}%`, Icon: Droplets },
-              { label: "Kecepatan Angin", value: `${weatherData.current.wind_kph} km/jam`, Icon: Wind },
-              { label: "Indeks UV", value: `${weatherData.current.uv} (UVI)`, Icon: Sun },
-              { 
-                label: "Kualitas Udara", 
-                value: getAQIDescription(weatherData.current.air_quality["us-epa-index"]).text, 
+              {
+                label: "Kelembapan",
+                value: `${weatherData.current.humidity}%`,
+                Icon: Droplets,
+              },
+              {
+                label: "Kecepatan Angin",
+                value: `${weatherData.current.wind_kph} km/jam`,
+                Icon: Wind,
+              },
+              {
+                label: "Indeks UV",
+                value: `${weatherData.current.uv} (UVI)`,
+                Icon: Sun,
+              },
+              {
+                label: "Kualitas Udara",
+                value: getAQIDescription(
+                  weatherData.current.air_quality["us-epa-index"],
+                ).text,
                 Icon: AirIcon,
-                colorClass: getAQIDescription(weatherData.current.air_quality["us-epa-index"]).color
+                colorClass: getAQIDescription(
+                  weatherData.current.air_quality["us-epa-index"],
+                ).color,
               },
             ]}
           />
 
-          <ForecastDaily 
+          <ForecastDaily
             forecasts={weatherData.forecast.forecastday.map((day: any) => ({
               day: formatDayName(day.date),
-              temp: Math.round(day.day.avgtemp_c),
+              // Mengambil rata-rata dari maxtemp dan mintemp yang ada di data OpenWeatherMap kita
+              temp: Math.round((day.day.maxtemp_c + day.day.mintemp_c) / 2),
               conditionText: day.day.condition.text,
-              desc: day.day.condition.text
+              desc: day.day.condition.text,
             }))}
           />
-
         </div>
       )}
     </div>
