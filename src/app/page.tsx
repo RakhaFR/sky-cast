@@ -84,7 +84,7 @@ export default function Home() {
               region: weatherData.location.region,
               temp: Math.round(weatherData.current.temp_c),
               condition: weatherData.current.condition.text,
-              date: formatDayName(weatherData.current.last_updated.split(" ")[0]),
+              date: formatDayName(new Date().toISOString().split("T")[0]),
             }} 
             IconComponent={getWeatherIcon(weatherData.current.condition.text)}
           />

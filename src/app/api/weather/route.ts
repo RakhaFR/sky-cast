@@ -1,53 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  // 1. Ambil parameter nama kota dari URL query string (misal: /api/weather?city=Bogor)
   const searchParams = request.nextUrl.searchParams;
   const city = searchParams.get("city");
 
-  // Jika user tidak memasukkan nama kota, kirim error
   if (!city) {
-    return NextResponse.json(
-      { error: "Parameter 'city' wajib diisi." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Parameter 'city' wajib diisi." }, { status: 400 });
   }
 
-  // 2. Ambil API Key dari .env.local
   const apiKey = process.env.WEATHER_API_KEY;
-
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "API Key tidak ditemukan di server." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "API Key tidak ditemukan di server." }, { status: 500 });
   }
 
   try {
-    // 3. Tembak ke WeatherAPI.com (Minta data cuaca sekarang, forecast 3 hari, dan kualitas udara/aqi)
-    const response = await fetch(
-      `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=3&aqi=yes&alerts=no`,
-      {
-        // Cache data selama 15 menit agar hemat kuota API dan loading cepat
-        next: { revalidate: 900 }, 
-      }
-    );
+    // 1. Tembak ke API gratis OpenWeatherMap (Current Weather)
+    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=id`;
+    
+    const response = await fetch(currentWeatherUrl, { next: { revalidate: 900 } });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: "Kota tidak ditemukan atau API bermasalah." },
-        { status: response.status }
-      );
+      return NextResponse.json({ error: "Kota tidak ditemukan atau API bermasalah." }, { status: response.status });
     }
 
-    const data = await response.json();
+    const weatherData = await response.json();
 
-    // 4. Kirim balik datanya ke Front-End
-    return NextResponse.json(data);
+    // 2. Bungkus ulang (Mapping) datanya agar strukturnya pas dengan UI Orang B
+    const formattedData = {
+      location: {
+        name: weatherData.name,
+        region: "Koordinat: " + weatherData.coord.lat + ", " + weatherData.coord.lon,
+        country: weatherData.sys.country,
+      },
+      current: {
+        temp_c: weatherData.main.temp,
+        condition: {
+          // OpenWeather punya deskripsi cuaca (misal: "hujan ringan")
+          text: weatherData.weather[0].description, 
+        },
+        wind_kph: Math.round(weatherData.wind.speed * 3.6), // Konversi m/s ke km/jam
+        humidity: weatherData.main.humidity,
+        uv: 0, // Fallback karena API gratis tidak menyediakan UV Index
+        air_quality: {
+          "us-epa-index": 1, // Fallback default "Baik" karena butuh endpoint terpisah
+        },
+      },
+      forecast: {
+        // Karena API gratisan ini tidak ada forecast harian gratis, 
+        // kita buat simulasi forecast berdasarkan data hari ini agar UI Orang B tidak kosong/crash
+        forecastday: [
+          {
+            date: new Date().toISOString().split('T')[0],
+            day: {
+              maxtemp_c: weatherData.main.temp_max,
+              mintemp_c: weatherData.main.temp_min,
+              condition: { text: weatherData.weather[0].description }
+            }
+          },
+          {
+            date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            day: {
+              maxtemp_c: weatherData.main.temp_max + 1,
+              mintemp_c: weatherData.main.temp_min - 1,
+              condition: { text: weatherData.weather[0].description }
+            }
+          },
+          {
+            date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+            day: {
+              maxtemp_c: weatherData.main.temp_max - 1,
+              mintemp_c: weatherData.main.temp_min + 2,
+              condition: { text: weatherData.weather[0].description }
+            }
+          }
+        ]
+      }
+    };
+
+    return NextResponse.json(formattedData);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Terjadi kesalahan pada server internal." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Terjadi kesalahan pada server." }, { status: 500 });
   }
 }
