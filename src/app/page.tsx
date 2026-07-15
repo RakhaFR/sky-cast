@@ -1,65 +1,115 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  // State untuk menyimpan data cuaca dari API internal kita
+  const [weatherData, setWeatherData] = useState<any>(null);
+  // State untuk melacak status loading saat fetch data sedang berjalan
+  const [loading, setLoading] = useState<boolean>(false);
+  // State untuk menangani pesan error jika kota tidak ditemukan / API down
+  const [error, setError] = useState<string | null>(null);
+  // State untuk menyimpan nama kota yang aktif dicari (Default: Cibinong)
+  const [city, setCity] = useState<string>("Cibinong");
+
+  // Fungsi utama untuk mengambil data dari API internal kita (/api/weather)
+  const fetchWeather = async (searchCity: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(searchCity)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal mengambil data cuaca.");
+      }
+
+      // Simpan data ke state jika sukses
+      setWeatherData(data);
+      // Update kota aktif saat ini agar sinkron
+      setCity(data.location.name); 
+      
+      // KONSOL LOG DATA SECARA DETAIL (Target utama Tugas 3)
+      console.log("=== DATA CUACA BERHASIL DI-FETCH ===");
+      console.log("Lokasi:", data.location.name, ",", data.location.region);
+      console.log("Cuaca Saat Ini:", data.current.condition.text, `${data.current.temp_c}°C`);
+      console.log("Forecast 3 Hari:", data.forecast.forecastday);
+      console.log("Kualitas Udara (US-EPA):", data.current.air_quality["us-epa-index"]);
+      console.log("====================================");
+
+    } catch (err: any) {
+      setError(err.message);
+      setWeatherData(null);
+      console.error("Error Fetching Weather:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Trigger pencarian pertama kali saat aplikasi dibuka (Default ke Cibinong)
+  useEffect(() => {
+    fetchWeather(city);
+  }, []);
+
+  // Fungsi wrapper yang nanti akan dioper ke komponen SearchBar
+  const handleSearch = (targetCity: string) => {
+    if (!targetCity.trim()) return;
+    fetchWeather(targetCity);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-4xl text-center space-y-6">
+        <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
+          SkyCast Dashboard
+        </h1>
+        
+        <p className="text-slate-400">
+          Membuka jalur data Back-End ke Front-End...
+        </p>
+
+        {/* BOX SIMULASI UTK TESTING DI BROWSER */}
+        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md mx-auto shadow-xl">
+          <h2 className="text-xl font-bold mb-4 text-slate-200 text-left">🧪 Simulator Kontrol Orang A</h2>
+          
+          {/* Form mini untuk testing pencarian sebelum SearchBar.tsx jadi */}
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const inputCity = formData.get("cityName") as string;
+              handleSearch(inputCity);
+            }}
+            className="flex gap-2 mb-4"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <input 
+              type="text" 
+              name="cityName"
+              placeholder="Ketik nama kota... (misal: Bogor)" 
+              className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-slate-200"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
+            >
+              Cari
+            </button>
+          </form>
+
+          {/* Status Loading / Error / Data Ready */}
+          <div className="text-left text-xs space-y-2 font-mono bg-slate-950 p-4 rounded-xl border border-slate-800">
+            <p><span className="text-purple-400">Status:</span> {loading ? "🔄 Loading..." : "🟢 Idle"}</p>
+            {error && <p><span className="text-red-400">Error:</span> {error}</p>}
+            <p>
+              <span className="text-blue-400">Kota Aktif:</span> {city}
+            </p>
+            <p>
+              <span className="text-green-400">Data Terikat:</span> {weatherData ? "Sudah Siap (Cek Console Log F12!)" : "Belum Ada"}
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
