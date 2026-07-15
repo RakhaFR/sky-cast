@@ -35,17 +35,26 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+# 🌤️ SkyCast - Next.js Weather Application
+
+Sebuah aplikasi dashboard cuaca modern, responsif, dan kaya fitur yang dibangun menggunakan **Next.js (App Router)**, **TypeScript**, dan **Tailwind CSS**. Project ini dirancang dengan struktur modular yang siap di-deploy langsung ke **Vercel**.
+
+## 📁 Struktur Project
+
+Berikut adalah gambaran menyeluruh dari arsitektur folder dan file di dalam project ini:
+
+```text
 src/
 ├── app/
-│   ├── page.tsx            # Halaman utama (Dashboard Cuaca)
-│   ├── layout.tsx          # Layout global (Font, HTML, Body)
+│   ├── page.tsx            # Halaman utama (Dashboard Utama Cuaca)
+│   ├── layout.tsx          # Layout global (Font, HTML, Body wrapper)
 │   └── api/
-│       └── weather/        # Route handler jika ingin fetch via internal API
+│       └── weather/        # Internal API Route handler untuk menyembunyikan API Key pihak ketiga
 │           └── route.ts
 ├── components/
-│   ├── CurrentWeather.tsx  # Komponen suhu sekarang & animasi utama
-│   ├── ForecastDaily.tsx   # Komponen ramalan cuaca beberapa hari ke depan
-│   ├── SearchBar.tsx       # Input pencarian kota
-│   └── WeatherDetails.tsx  # Komponen detail (Kecepatan angin, kelembapan, AQI)
+│   ├── CurrentWeather.tsx  # Menampilkan suhu saat ini, lokasi, dan animasi/visual utama cuaca
+│   ├── ForecastDaily.tsx   # Menampilkan ramalan cuaca (forecast) beberapa hari ke depan
+│   ├── SearchBar.tsx       # Input pencarian kota/lokasi
+│   └── WeatherDetails.tsx  # Menampilkan detail metrik (Kecepatan angin, kelembapan, UV index, AQI)
 └── utils/
-    └── helpers.ts          # Fungsi pembantu (konversi suhu, format tanggal)
+    └── helpers.ts          # Fungsi pembantu (Konversi suhu, format tanggal, mapping icon)
